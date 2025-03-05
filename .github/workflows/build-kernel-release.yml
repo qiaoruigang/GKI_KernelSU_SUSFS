@@ -72,6 +72,7 @@ jobs:
     uses: ./.github/workflows/kernel-a12-5.10.yml
     secrets: inherit
     with:
+      make_release: ${{ inputs.make_release }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
@@ -81,6 +82,7 @@ jobs:
     uses: ./.github/workflows/kernel-a13-5.10.yml
     secrets: inherit
     with:
+      make_release: ${{ inputs.make_release }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
@@ -90,6 +92,7 @@ jobs:
     uses: ./.github/workflows/kernel-a13-5.15.yml
     secrets: inherit
     with:
+      make_release: ${{ inputs.make_release }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
@@ -99,6 +102,7 @@ jobs:
     uses: ./.github/workflows/kernel-a14-5.15.yml
     secrets: inherit
     with:
+      make_release: ${{ inputs.make_release }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
@@ -108,6 +112,7 @@ jobs:
     uses: ./.github/workflows/kernel-a14-6.1.yml
     secrets: inherit
     with:
+      make_release: ${{ inputs.make_release }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
@@ -117,6 +122,7 @@ jobs:
     uses: ./.github/workflows/kernel-a15-6.6.yml
     secrets: inherit
     with:
+      make_release: ${{ inputs.make_release }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
@@ -332,31 +338,11 @@ jobs:
             git tag $NEW_TAG
             git push --tags
 
-      - name: List Available Artifacts
-        run: |
-          echo "Fetching artifacts from current workflow run..."
-          gh run list --json name -q '.[].name' > artifacts.txt || echo "No artifacts found."
-
-      - name: Filter Kernel Artifacts
-        id: filter
-        run: |
-          echo "Filtering artifacts matching kernel-*..."
-          grep "^kernel-" artifacts.txt > filtered_artifacts.txt || true
-          echo "Filtered artifacts:"
-          cat filtered_artifacts.txt || echo "No kernel-* artifacts found."
-
-      - name: Download Filtered Artifacts
-        run: |
-          mkdir -p ./downloaded-artifacts
-          while IFS= read -r artifact; do
-            echo "Downloading artifact: $artifact"
-            gh run download --name "$artifact" --dir ./downloaded-artifacts
-          done < filtered_artifacts.txt
-          
-      - name: List Downloaded Artifacts
-        run: |
-          echo "Downloaded kernel-* artifacts:"
-          ls -R ./downloaded-artifacts || echo "No kernel-* artifacts were downloaded."
+      # Download Artifacts for A12 (Only if A12 Build is successful or input is true or empty)
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./downloaded-artifacts
           
       # Create GitHub Release and upload files if make_release is true
       - name: Create GitHub Release
